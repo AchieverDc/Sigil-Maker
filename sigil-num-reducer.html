@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sacred Sigil Generator • All-Letters vs Vowel-Only (with Y)</title>
+    <link rel="stylesheet" href="/sigil-num-reducer.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="content">
+        <h1>✧ Sacred Sigil Generator ✧</h1>
+        <p class="subtitle">
+          Dual-method sigil creation with authentic sacred geometry
+          measurements<br />Choose between complete manifestation blueprint (All
+          Letters) or pure spiritual essence (Vowels Only with Y)
+        </p>
+
+        <div class="method-selector-container">
+          <div class="method-title">Select Sigil Creation Method</div>
+
+          <div class="method-switch">
+            <div class="method-option active" id="allLettersOption">
+              All Letters Method
+            </div>
+            <div class="method-option" id="vowelOnlyOption">
+              Vowels Only (with Y)
+            </div>
+            <div class="switch-slider"></div>
+          </div>
+
+          <div class="method-description">
+            <div class="method-desc-item all-letters active">
+              <span class="method-icon">✧</span>
+              <span class="method-name">All Letters Method</span>
+              <span class="method-desc"
+                >Processes every letter in your affirmation (vowels +
+                consonants). Creates a complex sigil representing your complete
+                manifestation blueprint with physical and spiritual
+                layers.</span
+              >
+              <span class="method-highlight"
+                >Full energetic signature • Maximum complexity • Complete
+                intention mapping</span
+              >
+            </div>
+            <div class="method-desc-item vowel-only">
+              <span class="method-icon">☾</span>
+              <span class="method-name">Vowels Only (with Y)</span>
+              <span class="method-desc"
+                >Processes only vowels (A, E, I, O, U, Y). Creates a purified
+                sigil representing the spiritual breath and vibrational essence
+                of your intention. Y is included as spiritually
+                significant.</span
+              >
+              <span class="method-highlight"
+                >Pure vibration • Spiritual essence • Mantra-style
+                reduction</span
+              >
+              <div class="spiritual-note">
+                Y is included as a vowel in spiritual contexts, representing the
+                bridge between physical and spiritual realms.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-section">
+          <label for="affirmation">Enter Your Affirmation Text:</label>
+          <textarea
+            id="affirmation"
+            placeholder="Type or paste your affirmation here..."
+            maxlength="10000"
+          >
+The advert for the xenia property management system referral program i had to kickstarted is a success and fruitfull that it already attracts so much users to purchase the license to use the software, it serves its physical and spiritual purpose and also bringing in lots of money that i am forever abundant and never lack money ever again, the money yields better monetary, physical, and spiritual value when invested in other ventures and its own improvement</textarea
+          >
+
+          <div class="input-stats">
+            <span class="char-count" id="charCount">0/10000 characters</span>
+            <span id="alphaCount">0 alphabetic letters</span>
+            <span id="vowelCount" style="display: none">0 vowels (with Y)</span>
+          </div>
+
+          <div class="error-message" id="inputError">
+            Please enter text containing at least one letter (A-Z).
+          </div>
+
+          <div class="options">
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="showSteps" checked />
+                Show detailed steps
+              </label>
+            </div>
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="showIntersections" checked />
+                Show intersection points
+              </label>
+            </div>
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="autoProcess" checked />
+                Auto-process on input
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button id="generate">
+            <span id="buttonText">Generate Sacred Sigil</span>
+          </button>
+        </div>
+
+        <div class="result-section">
+          <div class="result-title" id="stage1Title">
+            ✧ Stage 1: Unique Elements ✧
+          </div>
+          <div class="positions-sequence" id="positionsSequence">-</div>
+
+          <div class="result-title" id="stage2Title">
+            ✧ Stage 2: Unique Digits ✧
+          </div>
+          <div class="sequence-container" id="sequenceContainer">
+            <!-- Sequence labels will be inserted here -->
+          </div>
+          <div class="digits-sequence" id="digitsSequence">-</div>
+
+          <div class="result-title" id="stage3Title">
+            ✧ Stage 3: Master Sigil Number ✧
+          </div>
+          <div class="master-label">
+            Sum of final unique digits, reduced to single digit:
+            <span id="sumDisplay">-</span>
+          </div>
+          <div id="result">-</div>
+
+          <div class="stats">
+            <div class="stat-card">
+              <span class="stat-value" id="letterCount">0</span>
+              <div class="stat-label">Input Letters</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="processedCount">0</span>
+              <div class="stat-label" id="processedLabel">Processed</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="uniqueCount">0</span>
+              <div class="stat-label">Unique Elements</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="finalDigits">0</span>
+              <div class="stat-label">Final Digits</div>
+            </div>
+          </div>
+
+          <div class="steps-container" id="stepsContainer"></div>
+
+          <div class="section-divider"></div>
+
+          <div class="visualization-container">
+            <div class="visualization-title">
+              Sacred Geometry Sigil Visualization
+            </div>
+            <p class="visualization-description">
+              <span class="all-letters-method"
+                >Numbers 1-9 positioned on a perfect circle. Watch as your
+                complete manifestation path is drawn with precise angular
+                measurements.</span
+              >
+              <span class="vowel-only-method" style="display: none"
+                >Numbers 1-9 positioned on a perfect circle. Watch as your
+                spiritual essence path is drawn with precise vibrational
+                measurements.</span
+              ><br />
+              <span class="legend-start-inline">● Red</span>
+              = Start point |
+              <span class="legend-end-inline">★ Gold</span>
+              = End point |
+              <span class="legend-intersection-inline">⚬ Green</span>
+              = Intersection points
+            </p>
+
+            <div class="sigil-main-container">
+              <div class="sigil-canvas-container">
+                <canvas id="sigilCanvas" width="600" height="600"></canvas>
+                <div class="canvas-overlay" id="canvasOverlay">
+                  <div class="overlay-text">Drawing Sacred Path...</div>
+                </div>
+              </div>
+
+              <div class="measurements-container" id="measurementsContainer">
+                <div class="measurements-title">Sacred Measurements</div>
+
+                <div class="measurement-category">
+                  <div class="category-title">Circle Geometry</div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Radius:</span>
+                    <span class="measurement-value" id="circleRadius">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Circumference:</span>
+                    <span class="measurement-value" id="circleCircumference"
+                      >-</span
+                    >
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Area:</span>
+                    <span class="measurement-value" id="circleArea">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Number Spacing:</span>
+                    <span class="measurement-value" id="numberSpacing"
+                      >40°</span
+                    >
+                  </div>
+                </div>
+
+                <div class="measurement-category">
+                  <div class="category-title">Path Geometry</div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Total Length:</span>
+                    <span class="measurement-value" id="pathLength">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Segment Count:</span>
+                    <span class="measurement-value" id="segmentCount">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Avg Segment:</span>
+                    <span class="measurement-value" id="avgSegment">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Start Angle:</span>
+                    <span class="measurement-value" id="startAngle">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">End Angle:</span>
+                    <span class="measurement-value" id="endAngle">-</span>
+                  </div>
+                </div>
+
+                <div class="measurement-category">
+                  <div class="category-title">Sacred Ratios</div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Golden Ratio (φ):</span>
+                    <span class="measurement-value" id="goldenRatio">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">√2 Ratio:</span>
+                    <span class="measurement-value" id="sqrt2Ratio">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">√3 Ratio:</span>
+                    <span class="measurement-value" id="sqrt3Ratio">-</span>
+                  </div>
+                </div>
+
+                <div class="measurement-category">
+                  <div class="category-title">Energetic Signature</div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Path Complexity:</span>
+                    <span class="measurement-value" id="complexity">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Symmetry:</span>
+                    <span class="measurement-value" id="symmetry">-</span>
+                  </div>
+                  <div class="measurement-item">
+                    <span class="measurement-label">Intersections:</span>
+                    <span class="measurement-value" id="intersectionCount"
+                      >-</span
+                    >
+                  </div>
+                </div>
+
+                <div class="sacred-geometry-note">
+                  All measurements calculated using Euclidean geometry with
+                  sacred number principles.<br />
+                  Ratios within 2% tolerance of ideal values are considered
+                  "sacred alignments".
+                </div>
+              </div>
+            </div>
+
+            <div class="animate-btn-container">
+              <button class="animate-btn" id="animateBtn">
+                <span>✨</span> Animate Sacred Drawing
+              </button>
+              <button class="animate-btn reset" id="resetBtn">
+                <span>↺</span> Reset Animation
+              </button>
+            </div>
+
+            <div class="animation-status" id="animationStatus">
+              Sigil path drawing in sacred geometry progression...
+            </div>
+
+            <div class="legend">
+              <div class="legend-item">
+                <span class="legend-color legend-start"></span>
+                <span>Start Point (α)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color legend-path"></span>
+                <span>Path Line</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color legend-end"></span>
+                <span>End Point (ω)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color legend-intersection"></span>
+                <span>Intersection</span>
+              </div>
+            </div>
+
+            <div class="intersection-points" id="intersectionPoints">
+              <div class="intersection-title">Sacred Intersection Points</div>
+              <ul class="intersection-list" id="intersectionList">
+                <li>Animation will reveal energetic convergence points</li>
+              </ul>
+            </div>
+
+            <div class="download-section">
+              <div class="download-preserve-text">
+                Preserve your sacred geometry sigil
+              </div>
+              <button class="download-btn" id="downloadBtn">
+                <span class="download-icon">↓</span> Download High-Resolution
+                Sigil
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+    <script src="/sigil-num-reducer.js"></script>
+  </body>
+</html>
