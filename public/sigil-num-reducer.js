@@ -6,7 +6,6 @@ class ValidationError extends Error {
     this.type = type;
   }
 }
-
 class ProcessingError extends Error {
   constructor(message, type = "processing") {
     super(message);
@@ -40,13 +39,19 @@ const textToPositions = (text) => {
   return Array.from(cleaned).map((char) => letterToNumber(char));
 };
 
-const extractVowels = (text) => {
+// Extract Consonants (Strip Vowels including Y) - MAIN METHOD
+const extractConsonants = (text) => {
   if (typeof text !== "string")
     throw new ValidationError("Input must be a string");
-  const vowelsOnly = text.toUpperCase().replace(/[^AEIOUY]/g, "");
-  if (vowelsOnly.length === 0)
-    throw new ValidationError("No vowels found (vowels are A, E, I, O, U, Y)");
-  return vowelsOnly;
+  const consonantsOnly = text
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "")
+    .replace(/[AEIOUY]/g, "");
+  if (consonantsOnly.length === 0)
+    throw new ValidationError(
+      "No consonants found (vowels A, E, I, O, U, Y removed)",
+    );
+  return consonantsOnly;
 };
 
 const keepFirstOccurrenceOnly = (items) => {
@@ -119,10 +124,6 @@ const calculateSacredGeometry = (
   const centerY = canvasHeight / 2;
   const radius = Math.min(canvasWidth, canvasHeight) * 0.38;
 
-  const circleRadius = radius.toFixed(1);
-  const circumference = (2 * Math.PI * radius).toFixed(1);
-  const area = (Math.PI * radius * radius).toFixed(1);
-
   let segments = [];
   let totalLength = 0;
   for (let i = 0; i < pathPoints.length - 1; i++) {
@@ -145,7 +146,6 @@ const calculateSacredGeometry = (
 
   let goldenRatioDetected = "None";
   let sqrt2Detected = "None";
-  let sqrt3Detected = "None";
   for (let i = 0; i < segments.length - 1; i++) {
     const ratio = segments[i + 1] / segments[i];
     if (isSacredRatio(ratio, 1.618) || isSacredRatio(ratio, 0.618)) {
@@ -154,29 +154,14 @@ const calculateSacredGeometry = (
     if (isSacredRatio(ratio, 1.414) || isSacredRatio(ratio, 0.707)) {
       sqrt2Detected = `Seg ${i + 1}/${i + 2} = ${ratio.toFixed(3)}`;
     }
-    if (isSacredRatio(ratio, 1.732) || isSacredRatio(ratio, 0.577)) {
-      sqrt3Detected = `Seg ${i + 1}/${i + 2} = ${ratio.toFixed(3)}`;
-    }
   }
 
   const complexity =
     pathPoints.length > 0
       ? `${Math.min(Math.round((pathPoints.length / 9) * 10), 10)}/10`
       : "0/10";
-  const symmetry =
-    pathPoints.length < 3
-      ? "Minimal"
-      : pathPoints.length > 6
-        ? "Complex Asymmetry"
-        : "Balanced Flow";
 
   return {
-    circle: {
-      radius: `${circleRadius}px`,
-      circumference: `${circumference}px`,
-      area: `${area}px²`,
-      spacing: "40°",
-    },
     path: {
       totalLength: `${totalLength.toFixed(1)}px`,
       segmentCount: segments.length > 0 ? segments.length : "0",
@@ -187,43 +172,31 @@ const calculateSacredGeometry = (
     ratios: {
       golden: goldenRatioDetected,
       sqrt2: sqrt2Detected,
-      sqrt3: sqrt3Detected,
     },
     energetic: {
       complexity,
-      symmetry,
       intersections: "0",
     },
   };
 };
 
+// FIXED: Safe DOM element access to prevent null reference errors
+const safeSetText = (id, value) => {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+};
+
 const updateMeasurementsDisplay = (measurements) => {
-  document.getElementById("circleRadius").textContent =
-    measurements.circle.radius;
-  document.getElementById("circleCircumference").textContent =
-    measurements.circle.circumference;
-  document.getElementById("circleArea").textContent = measurements.circle.area;
-  document.getElementById("numberSpacing").textContent =
-    measurements.circle.spacing;
-  document.getElementById("pathLength").textContent =
-    measurements.path.totalLength;
-  document.getElementById("segmentCount").textContent =
-    measurements.path.segmentCount;
-  document.getElementById("avgSegment").textContent =
-    measurements.path.avgSegment;
-  document.getElementById("startAngle").textContent =
-    measurements.path.startAngle;
-  document.getElementById("endAngle").textContent = measurements.path.endAngle;
-  document.getElementById("goldenRatio").textContent =
-    measurements.ratios.golden;
-  document.getElementById("sqrt2Ratio").textContent = measurements.ratios.sqrt2;
-  document.getElementById("sqrt3Ratio").textContent = measurements.ratios.sqrt3;
-  document.getElementById("complexity").textContent =
-    measurements.energetic.complexity;
-  document.getElementById("symmetry").textContent =
-    measurements.energetic.symmetry;
-  document.getElementById("intersectionCount").textContent =
-    measurements.energetic.intersections;
+  // Only update elements that exist in the simplified HTML
+  safeSetText("pathLength", measurements.path.totalLength);
+  safeSetText("segmentCount", measurements.path.segmentCount);
+  safeSetText("avgSegment", measurements.path.avgSegment);
+  safeSetText("startAngle", measurements.path.startAngle);
+  safeSetText("endAngle", measurements.path.endAngle);
+  safeSetText("goldenRatio", measurements.ratios.golden);
+  safeSetText("sqrt2Ratio", measurements.ratios.sqrt2);
+  safeSetText("complexity", measurements.energetic.complexity);
+  safeSetText("intersectionCount", measurements.energetic.intersections);
 };
 
 // ========== SIGIL VISUALIZATION ==========
@@ -284,152 +257,63 @@ const findPathIntersections = (pathPoints) => {
   return intersections;
 };
 
+// UPDATED: Removed purple concentric circles, displays only digits 1-9
 const drawStaticBackground = (
   ctx,
   centerX,
   centerY,
   radius,
   numberPositions,
-  method,
 ) => {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  for (let i = 1; i <= 3; i++) {
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * (0.92 + i * 0.03), 0, 2 * Math.PI);
-    ctx.strokeStyle = `rgba(${method === "vowels" ? "255, 107, 107" : "108, 92, 231"}, ${0.15 - i * 0.04})`;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
-
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.strokeStyle =
-    method === "vowels"
-      ? "rgba(255, 107, 107, 0.6)"
-      : "rgba(108, 92, 231, 0.6)";
-  ctx.lineWidth = 5;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius * 0.94, 0, 2 * Math.PI);
-  ctx.strokeStyle =
-    method === "vowels"
-      ? "rgba(255, 107, 107, 0.45)"
-      : "rgba(108, 92, 231, 0.45)";
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
+  // Draw Number Positions (1-9) - No background circles
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   for (let num = 1; num <= 9; num++) {
     const pos = numberPositions[num];
 
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, radius * 0.08, 0, 2 * Math.PI);
-    ctx.fillStyle =
-      method === "vowels"
-        ? "rgba(255, 107, 107, 0.18)"
-        : "rgba(108, 92, 231, 0.18)";
-    ctx.fill();
-    ctx.strokeStyle =
-      method === "vowels"
-        ? "rgba(255, 107, 107, 0.8)"
-        : "rgba(108, 92, 231, 0.8)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle =
-      method === "vowels"
-        ? "rgba(255, 107, 107, 0.2)"
-        : "rgba(108, 92, 231, 0.2)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
+    // Draw Number
     ctx.font = `bold ${Math.max(30, radius / 8.5)}px Arial`;
     ctx.fillStyle = "#e6e1ff";
-    ctx.shadowColor =
-      method === "vowels"
-        ? "rgba(255, 107, 107, 0.9)"
-        : "rgba(108, 92, 231, 0.9)";
+    ctx.shadowColor = `rgba(108, 92, 231, 0.9)`;
     ctx.shadowBlur = 18;
     ctx.fillText(num.toString(), pos.x, pos.y);
     ctx.shadowBlur = 0;
 
+    // Stroke for clarity
     ctx.strokeStyle = "#1a1825";
     ctx.lineWidth = 3.5;
     ctx.strokeText(num.toString(), pos.x, pos.y);
-    ctx.strokeStyle = method === "vowels" ? "#ff5252" : "#6c5ce7";
+    ctx.strokeStyle = "#6c5ce7";
     ctx.lineWidth = 2;
     ctx.strokeText(num.toString(), pos.x, pos.y);
 
-    ctx.font = `normal ${Math.max(14, radius / 22)}px Arial`;
-    ctx.fillStyle = "rgba(255, 209, 102, 0.9)";
-    ctx.fillText(
-      `${((num - 1) * 40) % 360}°`,
-      centerX + radius * 0.78 * Math.cos((pos.angle * Math.PI) / 180),
-      centerY + radius * 0.78 * Math.sin((pos.angle * Math.PI) / 180),
-    );
+    // Small dot under number for anchor point
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgba(108, 92, 231, 0.5)";
+    ctx.fill();
   }
 
+  // Center decorative element
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius * 0.12, 0, 2 * Math.PI);
-  ctx.fillStyle =
-    method === "vowels"
-      ? "rgba(255, 107, 107, 0.12)"
-      : "rgba(108, 92, 231, 0.12)";
-  ctx.fill();
-  ctx.strokeStyle =
-    method === "vowels"
-      ? "rgba(255, 107, 107, 0.65)"
-      : "rgba(108, 92, 231, 0.65)";
-  ctx.lineWidth = 3.5;
+  ctx.arc(centerX, centerY, radius * 0.06, 0, 2 * Math.PI);
+  ctx.strokeStyle = "rgba(255, 209, 102, 0.35)";
+  ctx.lineWidth = 1.8;
   ctx.stroke();
 
-  const seedRadius = radius * 0.06;
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * 2 * Math.PI;
-    const x = centerX + seedRadius * Math.cos(angle);
-    const y = centerY + seedRadius * Math.sin(angle);
-    ctx.beginPath();
-    ctx.arc(x, y, seedRadius, 0, 2 * Math.PI);
-    ctx.strokeStyle = "rgba(255, 209, 102, 0.35)";
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-  }
-
+  // Background stars/particles
   for (let i = 0; i < 40; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const distance = radius * (0.4 + Math.random() * 0.58);
-    const x = centerX + distance * Math.cos(angle);
-    const y = centerY + distance * Math.sin(angle);
+    const dist = radius * (0.4 + Math.random() * 0.58);
+    const x = centerX + dist * Math.cos(angle);
+    const y = centerY + dist * Math.sin(angle);
     const size = Math.random() * 3.5 + 1.2;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, 2 * Math.PI);
     ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.7 + 0.25})`;
     ctx.fill();
-  }
-
-  if (method === "all") {
-    ctx.beginPath();
-    let spiralAngle = 0;
-    let spiralRadius = radius * 0.15;
-    const spiralCenterX = centerX + radius * 0.25;
-    const spiralCenterY = centerY - radius * 0.25;
-    while (spiralRadius < radius * 0.6) {
-      const x = spiralCenterX + spiralRadius * Math.cos(spiralAngle);
-      const y = spiralCenterY + spiralRadius * Math.sin(spiralAngle);
-      if (spiralAngle === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-      spiralAngle += 0.1;
-      spiralRadius *= 1.035;
-    }
-    ctx.strokeStyle = "rgba(255, 209, 102, 0.12)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
   }
 };
 
@@ -445,10 +329,10 @@ const drawStar = (
 ) => {
   ctx.beginPath();
   for (let i = 0; i < points * 2; i++) {
-    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const r = i % 2 === 0 ? outerRadius : innerRadius;
     const angle = (i * Math.PI) / points - Math.PI / 2;
-    const xPos = x + Math.cos(angle) * radius;
-    const yPos = y + Math.sin(angle) * radius;
+    const xPos = x + Math.cos(angle) * r;
+    const yPos = y + Math.sin(angle) * r;
     if (i === 0) ctx.moveTo(xPos, yPos);
     else ctx.lineTo(xPos, yPos);
   }
@@ -473,9 +357,7 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
     radius,
     canvasWidth,
     canvasHeight,
-    method = "all",
   } = options;
-
   let currentSegment = 0;
   let progress = 0;
   let animationId = null;
@@ -484,7 +366,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
   const intersections = showIntersections
     ? findPathIntersections(pathPoints)
     : [];
-
   const measurements = calculateSacredGeometry(
     pathPoints,
     numberPositions,
@@ -493,26 +374,19 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
   );
   measurements.energetic.intersections = intersections.length.toString();
   updateMeasurementsDisplay(measurements);
-
-  document.getElementById("canvasOverlay").classList.add("active");
-  document.getElementById("animationStatus").classList.add("active");
-  document.getElementById("animateBtn").disabled = true;
-  document.getElementById("resetBtn").disabled = true;
+  document.getElementById("canvasOverlay")?.classList.add("active");
+  document.getElementById("animationStatus")?.classList.add("active");
+  const animateBtn = document.getElementById("animateBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  if (animateBtn) animateBtn.disabled = true;
+  if (resetBtn) resetBtn.disabled = true;
 
   const animate = () => {
     if (!isAnimating) {
       cancelAnimationFrame(animationId);
       return;
     }
-
-    drawStaticBackground(
-      ctx,
-      centerX,
-      centerY,
-      radius,
-      numberPositions,
-      method,
-    );
+    drawStaticBackground(ctx, centerX, centerY, radius, numberPositions);
 
     if (currentSegment > 0) {
       ctx.beginPath();
@@ -526,7 +400,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       ctx.lineJoin = "round";
       ctx.stroke();
     }
-
     if (currentSegment < pathPoints.length - 1) {
       const start = pathPoints[currentSegment];
       const end = pathPoints[currentSegment + 1];
@@ -537,7 +410,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       else
         ctx.moveTo(pathPoints[currentSegment].x, pathPoints[currentSegment].y);
       ctx.lineTo(currentX, currentY);
-
       const gradient = ctx.createLinearGradient(
         start.x,
         start.y,
@@ -549,34 +421,28 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       ctx.strokeStyle = gradient;
       ctx.lineWidth = Math.max(5.5, radius / 42) * 1.3;
       ctx.stroke();
-
       ctx.beginPath();
       ctx.arc(currentX, currentY, Math.max(9, radius / 32), 0, 2 * Math.PI);
-      ctx.fillStyle = method === "vowels" ? "#ff5252" : "#ff6b6b";
+      ctx.fillStyle = "#ff6b6b";
       ctx.fill();
-      ctx.strokeStyle = method === "vowels" ? "#cc0000" : "#ff5252";
+      ctx.strokeStyle = "#ff5252";
       ctx.lineWidth = 3;
       ctx.stroke();
-      ctx.shadowColor =
-        method === "vowels"
-          ? "rgba(255, 82, 82, 0.95)"
-          : "rgba(255, 107, 107, 0.95)";
+      ctx.shadowColor = "rgba(255, 107, 107, 0.95)";
       ctx.shadowBlur = 18;
       ctx.fill();
       ctx.shadowBlur = 0;
     }
-
-    ctx.fillStyle = method === "vowels" ? "#ff8c42" : "#6c5ce7";
+    ctx.fillStyle = "#6c5ce7";
     for (let i = 0; i <= currentSegment; i++) {
       const point = pathPoints[i];
       ctx.beginPath();
       ctx.arc(point.x, point.y, Math.max(10, radius / 28), 0, 2 * Math.PI);
       ctx.fill();
-      ctx.strokeStyle = method === "vowels" ? "#e65c00" : "#5a4fcf";
+      ctx.strokeStyle = "#5a4fcf";
       ctx.lineWidth = 3;
       ctx.stroke();
     }
-
     if (pathPoints.length > 0) {
       const startPoint = pathPoints[0];
       ctx.beginPath();
@@ -587,15 +453,12 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
         0,
         2 * Math.PI,
       );
-      ctx.fillStyle = method === "vowels" ? "#ff5252" : "#ff6b6b";
+      ctx.fillStyle = "#ff6b6b";
       ctx.fill();
-      ctx.strokeStyle = method === "vowels" ? "#cc0000" : "#ff5252";
+      ctx.strokeStyle = "#ff5252";
       ctx.lineWidth = 4;
       ctx.stroke();
-      ctx.shadowColor =
-        method === "vowels"
-          ? "rgba(255, 82, 82, 0.95)"
-          : "rgba(255, 107, 107, 0.95)";
+      ctx.shadowColor = "rgba(255, 107, 107, 0.95)";
       ctx.shadowBlur = 22;
       ctx.fill();
       ctx.shadowBlur = 0;
@@ -605,7 +468,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       ctx.textBaseline = "middle";
       ctx.fillText("α", startPoint.x, startPoint.y);
     }
-
     if (currentSegment >= pathPoints.length - 1 && pathPoints.length > 1) {
       const endPoint = pathPoints[pathPoints.length - 1];
       drawStar(
@@ -624,7 +486,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       ctx.textBaseline = "middle";
       ctx.fillText("ω", endPoint.x, endPoint.y);
     }
-
     progress += animationSpeed;
     if (progress >= 1) {
       progress = 0;
@@ -632,7 +493,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
       updateSequenceHighlight(currentSegment);
       if (currentSegment >= pathPoints.length - 1) {
         cancelAnimationFrame(animationId);
-
         ctx.beginPath();
         ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
         for (let i = 1; i < pathPoints.length; i++) {
@@ -641,18 +501,16 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
         ctx.strokeStyle = "#ffd166";
         ctx.lineWidth = Math.max(5.5, radius / 42);
         ctx.stroke();
-
-        ctx.fillStyle = method === "vowels" ? "#ff8c42" : "#6c5ce7";
+        ctx.fillStyle = "#6c5ce7";
         for (let i = 0; i < pathPoints.length; i++) {
           const point = pathPoints[i];
           ctx.beginPath();
           ctx.arc(point.x, point.y, Math.max(10, radius / 28), 0, 2 * Math.PI);
           ctx.fill();
-          ctx.strokeStyle = method === "vowels" ? "#e65c00" : "#5a4fcf";
+          ctx.strokeStyle = "#5a4fcf";
           ctx.lineWidth = 3;
           ctx.stroke();
         }
-
         const startPoint = pathPoints[0];
         ctx.beginPath();
         ctx.arc(
@@ -662,15 +520,14 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
           0,
           2 * Math.PI,
         );
-        ctx.fillStyle = method === "vowels" ? "#ff5252" : "#ff6b6b";
+        ctx.fillStyle = "#ff6b6b";
         ctx.fill();
-        ctx.strokeStyle = method === "vowels" ? "#cc0000" : "#ff5252";
+        ctx.strokeStyle = "#ff5252";
         ctx.lineWidth = 4;
         ctx.stroke();
         ctx.font = `bold ${Math.max(16, radius / 14)}px Arial`;
         ctx.fillStyle = "white";
         ctx.fillText("α", startPoint.x, startPoint.y);
-
         if (pathPoints.length > 1) {
           const endPoint = pathPoints[pathPoints.length - 1];
           drawStar(
@@ -687,7 +544,6 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
           ctx.fillStyle = "#1a1825";
           ctx.fillText("ω", endPoint.x, endPoint.y);
         }
-
         if (showIntersections && intersections.length > 0) {
           ctx.fillStyle = "#06d6a0";
           for (const { point, angle } of intersections) {
@@ -710,11 +566,10 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
             );
           }
         }
-
-        document.getElementById("canvasOverlay").classList.remove("active");
-        document.getElementById("animationStatus").classList.remove("active");
-        document.getElementById("animateBtn").disabled = false;
-        document.getElementById("resetBtn").disabled = false;
+        document.getElementById("canvasOverlay")?.classList.remove("active");
+        document.getElementById("animationStatus")?.classList.remove("active");
+        if (animateBtn) animateBtn.disabled = false;
+        if (resetBtn) resetBtn.disabled = false;
         onAnimationComplete(intersections);
         return;
       }
@@ -722,15 +577,14 @@ const animateSigilPath = (ctx, pathPoints, numberPositions, options = {}) => {
     animationId = requestAnimationFrame(animate);
   };
   animate();
-
   return {
     stop: () => {
       isAnimating = false;
       if (animationId) cancelAnimationFrame(animationId);
-      document.getElementById("canvasOverlay").classList.remove("active");
-      document.getElementById("animationStatus").classList.remove("active");
-      document.getElementById("animateBtn").disabled = false;
-      document.getElementById("resetBtn").disabled = false;
+      document.getElementById("canvasOverlay")?.classList.remove("active");
+      document.getElementById("animationStatus")?.classList.remove("active");
+      if (animateBtn) animateBtn.disabled = false;
+      if (resetBtn) resetBtn.disabled = false;
     },
   };
 };
@@ -752,6 +606,7 @@ const formatArray = (arr, maxItems = 15) => {
 
 const createSequenceLabels = (digits) => {
   const container = document.getElementById("sequenceContainer");
+  if (!container) return;
   container.innerHTML = "";
   if (digits.length === 0) {
     container.innerHTML =
@@ -768,6 +623,7 @@ const createSequenceLabels = (digits) => {
 
 const updateIntersectionDisplay = (intersections, pathPoints, digits) => {
   const listElement = document.getElementById("intersectionList");
+  if (!listElement) return;
   if (intersections.length === 0) {
     listElement.innerHTML =
       "<li>No energetic convergence points detected in this sigil</li>";
@@ -789,6 +645,7 @@ const updateIntersectionDisplay = (intersections, pathPoints, digits) => {
 // ========== UI HELPERS ==========
 const showNotification = (message, type = "success") => {
   const notification = document.getElementById("notification");
+  if (!notification) return;
   notification.textContent = message;
   notification.className = `notification ${type} show`;
   setTimeout(() => notification.classList.remove("show"), 4200);
@@ -796,18 +653,20 @@ const showNotification = (message, type = "success") => {
 
 const showError = (message) => {
   const errorElement = document.getElementById("inputError");
+  if (!errorElement) return;
   errorElement.textContent = message;
   errorElement.classList.add("show");
   setTimeout(() => errorElement.classList.remove("show"), 6200);
 };
 
 const hideError = () => {
-  document.getElementById("inputError").classList.remove("show");
+  document.getElementById("inputError")?.classList.remove("show");
 };
 
-const setLoading = (isLoading, method = "all") => {
+const setLoading = (isLoading) => {
   const button = document.getElementById("generate");
   const buttonText = document.getElementById("buttonText");
+  if (!button || !buttonText) return;
   if (isLoading) {
     button.classList.add("loading");
     button.disabled = true;
@@ -816,42 +675,33 @@ const setLoading = (isLoading, method = "all") => {
     button.classList.remove("loading");
     button.disabled = false;
     buttonText.textContent = "Generate Sacred Sigil";
-    if (document.body.classList.contains("vowel-mode")) {
-      button.style.background =
-        "linear-gradient(135deg, var(--vowel-only-primary) 0%, var(--vowel-only-secondary) 100%)";
-    } else {
-      button.style.background =
-        "linear-gradient(135deg, var(--all-letters-primary) 0%, var(--all-letters-secondary) 100%)";
-    }
+    button.style.background =
+      "linear-gradient(135deg, var(--all-letters-primary) 0%, var(--all-letters-secondary) 100%)";
   }
 };
 
-const updateCharCount = (text, method = "all") => {
+const updateCharCount = (text) => {
   const charCountEl = document.getElementById("charCount");
-  const alphaCountEl = document.getElementById("alphaCount");
-  const vowelCountEl = document.getElementById("vowelCount");
+  const consonantCountEl = document.getElementById("consonantCount");
+  if (!charCountEl || !consonantCountEl) return;
   const totalChars = text.length;
   const alphaChars = text.replace(/[^a-zA-Z]/g, "").length;
   charCountEl.textContent = `${totalChars}/10000 characters`;
   charCountEl.className = "char-count";
   if (totalChars > 8000) charCountEl.classList.add("warning");
   else if (totalChars > 5000) charCountEl.classList.add("good");
-  alphaCountEl.textContent = `${alphaChars} alphabetic letters`;
-  if (method === "vowels") {
-    const vowels = text.toUpperCase().replace(/[^AEIOUY]/g, "");
-    vowelCountEl.textContent = `${vowels.length} vowels (with Y)`;
-    vowelCountEl.style.display = "block";
-    alphaCountEl.style.display = "none";
-  } else {
-    vowelCountEl.style.display = "none";
-    alphaCountEl.style.display = "block";
-  }
+  const consonants = text
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "")
+    .replace(/[AEIOUY]/g, "");
+  consonantCountEl.textContent = `${consonants.length} consonants`;
 };
 
 const setupDownloadButton = () => {
-  document.getElementById("downloadBtn").addEventListener("click", () => {
+  document.getElementById("downloadBtn")?.addEventListener("click", () => {
     try {
       const canvas = document.getElementById("sigilCanvas");
+      if (!canvas) return;
       const scale = 2;
       const tempCanvas = document.createElement("canvas");
       const tempCtx = tempCanvas.getContext("2d");
@@ -874,60 +724,6 @@ const setupDownloadButton = () => {
   });
 };
 
-const updateMethodDisplay = (method) => {
-  const allLettersOption = document.getElementById("allLettersOption");
-  const vowelOnlyOption = document.getElementById("vowelOnlyOption");
-  const switchSlider = document.querySelector(".switch-slider");
-  const allLettersDesc = document.querySelector(
-    ".method-desc-item.all-letters",
-  );
-  const vowelOnlyDesc = document.querySelector(".method-desc-item.vowel-only");
-  if (method === "vowels") {
-    document.body.classList.add("vowel-mode");
-    document.body.classList.remove("all-letters-mode");
-    allLettersOption.classList.remove("active");
-    vowelOnlyOption.classList.add("active");
-    switchSlider.style.left = "calc(50% + 5px)";
-    switchSlider.style.background =
-      "linear-gradient(135deg, var(--vowel-only-primary), var(--vowel-only-secondary))";
-    allLettersDesc.classList.remove("active");
-    vowelOnlyDesc.classList.add("active");
-    document.getElementById("vowelCount").style.display = "block";
-    document.getElementById("stage1Title").textContent =
-      "✧ Stage 1: Unique Vowels (with Y) ✧";
-    document.getElementById("stage1Title").classList.add("vowel-mode");
-    document.getElementById("stage2Title").classList.add("vowel-mode");
-    document.getElementById("stage3Title").classList.add("vowel-mode");
-    document.querySelector(".all-letters-method").style.display = "none";
-    document.querySelector(".vowel-only-method").style.display = "block";
-    document.getElementById("processedLabel").textContent = "Vowels Processed";
-  } else {
-    document.body.classList.remove("vowel-mode");
-    document.body.classList.add("all-letters-mode");
-    allLettersOption.classList.add("active");
-    vowelOnlyOption.classList.remove("active");
-    switchSlider.style.left = "5px";
-    switchSlider.style.background =
-      "linear-gradient(135deg, var(--all-letters-primary), var(--all-letters-secondary))";
-    allLettersDesc.classList.add("active");
-    vowelOnlyDesc.classList.remove("active");
-    document.getElementById("vowelCount").style.display = "none";
-    document.getElementById("stage1Title").textContent =
-      "✧ Stage 1: Unique Elements ✧";
-    document.getElementById("stage1Title").classList.remove("vowel-mode");
-    document.getElementById("stage2Title").classList.remove("vowel-mode");
-    document.getElementById("stage3Title").classList.remove("vowel-mode");
-    document.querySelector(".all-letters-method").style.display = "block";
-    document.querySelector(".vowel-only-method").style.display = "none";
-    document.getElementById("processedLabel").textContent = "Processed";
-  }
-  const button = document.getElementById("generate");
-  button.style.background =
-    method === "vowels"
-      ? "linear-gradient(135deg, var(--vowel-only-primary) 0%, var(--vowel-only-secondary) 100%)"
-      : "linear-gradient(135deg, var(--all-letters-primary) 0%, var(--all-letters-secondary) 100%)";
-};
-
 // ========== MAIN PROCESSING ==========
 let currentAnimation = null;
 let currentPathPoints = [];
@@ -935,252 +731,113 @@ let currentDigits = [];
 let currentNumberPositions = null;
 let currentCanvasData = null;
 let currentMeasurements = null;
-let currentMethod = "all";
 
 const generateSigilSequence = (text, options = {}) => {
-  const { showSteps = false, method = "all" } = options;
+  const { showSteps = false } = options;
   const steps = [];
   try {
-    if (method === "vowels") {
-      // VOWEL-ONLY METHOD (with Y)
-      const vowelsOnly = extractVowels(text);
-      if (showSteps) {
-        steps.push({
-          step: "Stage 1a: Extract Vowels Only",
-          detail: `Removed all consonants. Kept only vowels (A, E, I, O, U, Y).
-${vowelsOnly.length} vowels remain.
-Example: "THE MONEY" → "EOE"`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      const vowelDedupResult = keepFirstOccurrenceOnly(vowelsOnly.split(""));
-      const {
-        unique: uniqueVowels,
-        uniqueCount: vowelUniqueCount,
-        duplicateCount: vowelDuplicateCount,
-      } = vowelDedupResult;
-      if (showSteps) {
-        const vowelSample = vowelsOnly.slice(0, 25);
-        const uniqueVowelSample = uniqueVowels.slice(0, 25).join("");
-        steps.push({
-          step: "Stage 1b: Remove Duplicate Vowels",
-          detail: `Keep only FIRST occurrence of each vowel.
-All subsequent duplicates eliminated.
-Vowels: "${vowelSample}${vowelsOnly.length > 25 ? "..." : ""}"
-After deduplication: "${uniqueVowelSample}"
-${vowelUniqueCount} unique vowels remain (${vowelDuplicateCount} removed)`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      // Vowel to position mapping
-      const vowelPositionsMap = { A: 1, E: 5, I: 9, O: 15, U: 21, Y: 25 };
-      const positions = uniqueVowels.map((v) => vowelPositionsMap[v]);
-      const posSample = positions.slice(0, 15).join(", ");
-      if (showSteps) {
-        steps.push({
-          step: "Stage 2a: Convert Vowels to Positions",
-          detail: `Convert each unique vowel to its alphabet position.
-Vowels: [${uniqueVowels.slice(0, 15).join(", ")}${uniqueVowels.length > 15 ? "..." : ""}]
-Positions: [${positions
-            .slice(0, 15)
-            .map((p, i) => `${uniqueVowels[i]}=${p}`)
-            .join(", ")}]`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      const digitsAfterRoot = positionsToDigits(positions);
-      if (showSteps) {
-        const digSample = digitsAfterRoot.slice(0, 15).join(", ");
-        steps.push({
-          step: "Stage 2b: Digital Root Reduction",
-          detail: `Convert each position to single digit (1-9).
-Positions: [${posSample}]
-Digits:     [${digSample}]`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      const digitDedupResult = keepFirstOccurrenceOnly(digitsAfterRoot);
-      const {
-        unique: uniqueDigits,
-        uniqueCount: digUniqueCount,
-        duplicateCount: digDuplicateCount,
-      } = digitDedupResult;
-      if (showSteps) {
-        const digSample = digitsAfterRoot.slice(0, 20).join(", ");
-        const uniqueDigSample = uniqueDigits.slice(0, 20).join(", ");
-        steps.push({
-          step: "Stage 2c: Remove Duplicate Digits",
-          detail: `Keep only FIRST occurrence of each digit (1-9).
-All subsequent duplicates eliminated.
-Digits: [${digSample}]
-After deduplication: [${uniqueDigSample}]
-${digUniqueCount} unique digits remain (${digDuplicateCount} removed)`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      const { sum, masterNumber } = calculateMasterSigil(uniqueDigits);
-      if (showSteps) {
-        const digitsStr = uniqueDigits.join(" + ");
-        steps.push({
-          step: "Stage 3a: Sum Final Unique Digits",
-          detail: `Add all remaining unique digits together:
-${digitsStr} = ${sum}`,
-          type: "success",
-          method: "vowels",
-        });
-        steps.push({
-          step: "Stage 3b: Master Sigil (Final Reduction)",
-          detail: `Reduce sum to single digit:
-${sum} → ${masterNumber}`,
-          type: "success",
-          method: "vowels",
-        });
-      }
-      return {
-        success: true,
-        masterSigil: masterNumber,
-        uniqueElements: uniqueVowels,
-        uniqueDigits: uniqueDigits,
-        sum: sum,
-        steps: steps,
-        stats: {
-          inputLetters: text.replace(/[^a-zA-Z]/g, "").length,
-          processedCount: vowelsOnly.length,
-          uniqueCount: vowelUniqueCount,
-          finalDigits: digUniqueCount,
-          method: "vowels",
-        },
-      };
-    } else {
-      // ALL-LETTERS METHOD
-      const cleanedText = text.replace(/[^a-zA-Z]/g, "").toUpperCase();
-      const positions = textToPositions(text);
-      if (showSteps) {
-        steps.push({
-          step: "Stage 1a: Clean & Convert to Positions",
-          detail: `Removed non-alphabetic characters. ${cleanedText.length} letters remain.
-Example: "THE" → T=20, H=8, E=5`,
-          type: "success",
-          method: "all",
-        });
-      }
-      const positionDedupResult = keepFirstOccurrenceOnly(positions);
-      const {
-        unique: uniquePositions,
-        uniqueCount: posUniqueCount,
-        duplicateCount: posDuplicateCount,
-      } = positionDedupResult;
-      if (showSteps) {
-        const posSample = formatArray(positions, 20);
-        const uniquePosSample = formatArray(uniquePositions, 20);
-        steps.push({
-          step: "Stage 1b: Remove Duplicate Positions",
-          detail: `Keep only FIRST occurrence of each position number.
-All subsequent duplicates eliminated.
-Positions: [${posSample}]
-After deduplication: [${uniquePosSample}]
-${posUniqueCount} unique positions remain (${posDuplicateCount} removed)`,
-          type: "success",
-          method: "all",
-        });
-      }
-      const digitsAfterRoot = positionsToDigits(uniquePositions);
-      if (showSteps) {
-        const posSample = formatArray(uniquePositions, 15);
-        const digSample = formatArray(digitsAfterRoot, 15);
-        steps.push({
-          step: "Stage 2a: Digital Root Reduction",
-          detail: `Convert each unique position to single digit (1-9).
-Positions: [${posSample}]
-Digits:     [${digSample}]`,
-          type: "success",
-          method: "all",
-        });
-      }
-      const digitDedupResult = keepFirstOccurrenceOnly(digitsAfterRoot);
-      const {
-        unique: uniqueDigits,
-        uniqueCount: digUniqueCount,
-        duplicateCount: digDuplicateCount,
-      } = digitDedupResult;
-      if (showSteps) {
-        const digSample = formatArray(digitsAfterRoot, 20);
-        const uniqueDigSample = formatArray(uniqueDigits, 20);
-        steps.push({
-          step: "Stage 2b: Remove Duplicate Digits",
-          detail: `Keep only FIRST occurrence of each digit (1-9).
-All subsequent duplicates eliminated.
-Digits: [${digSample}]
-After deduplication: [${uniqueDigSample}]
-${digUniqueCount} unique digits remain (${digDuplicateCount} removed)`,
-          type: "success",
-          method: "all",
-        });
-      }
-      const { sum, masterNumber } = calculateMasterSigil(uniqueDigits);
-      if (showSteps) {
-        const digitsStr = uniqueDigits.join(" + ");
-        steps.push({
-          step: "Stage 3a: Sum Final Unique Digits",
-          detail: `Add all remaining unique digits together:
-${digitsStr} = ${sum}`,
-          type: "success",
-          method: "all",
-        });
-        steps.push({
-          step: "Stage 3b: Master Sigil (Final Reduction)",
-          detail: `Reduce sum to single digit:
-${sum} → ${masterNumber}`,
-          type: "success",
-          method: "all",
-        });
-      }
-      return {
-        success: true,
-        masterSigil: masterNumber,
-        uniqueElements: uniquePositions,
-        uniqueDigits: uniqueDigits,
-        sum: sum,
-        steps: steps,
-        stats: {
-          inputLetters: cleanedText.length,
-          processedCount: cleanedText.length,
-          uniqueCount: posUniqueCount,
-          finalDigits: digUniqueCount,
-          method: "all",
-        },
-      };
+    // CONSONANT REDUCTION METHOD (Main Process)
+    const consonantsOnly = extractConsonants(text);
+    if (showSteps) {
+      steps.push({
+        step: "Stage 1a: Extract Consonants",
+        detail: `Removed all vowels (A, E, I, O, U, Y). Kept only consonants.\n${consonantsOnly.length} consonants remain.\nExample: "THE MONEY" → "THMNY"`,
+        type: "success",
+      });
     }
+    const consonantDedupResult = keepFirstOccurrenceOnly(
+      consonantsOnly.split(""),
+    );
+    const {
+      unique: uniqueConsonants,
+      uniqueCount: consUniqueCount,
+      duplicateCount: consDuplicateCount,
+    } = consonantDedupResult;
+    if (showSteps) {
+      const consSample = consonantsOnly.slice(0, 25);
+      const uniqueConsSample = uniqueConsonants.slice(0, 25).join("");
+      steps.push({
+        step: "Stage 1b: Remove Duplicate Consonants",
+        detail: `Keep only FIRST occurrence of each consonant.\nAll subsequent duplicates eliminated.\nConsonants: "${consSample}${consonantsOnly.length > 25 ? "..." : ""}"\nAfter deduplication: "${uniqueConsSample}"\n${consUniqueCount} unique consonants remain (${consDuplicateCount} removed)`,
+        type: "success",
+      });
+    }
+    const positions = uniqueConsonants.map((c) => letterToNumber(c));
+    const posSample = positions.slice(0, 15).join(", ");
+    if (showSteps) {
+      steps.push({
+        step: "Stage 2a: Convert Consonants to Positions",
+        detail: `Convert each unique consonant to its alphabet position.\nConsonants: [${uniqueConsonants.slice(0, 15).join(", ")}${uniqueConsonants.length > 15 ? "..." : ""}]\nPositions: [${positions
+          .slice(0, 15)
+          .map((p, i) => `${uniqueConsonants[i]}=${p}`)
+          .join(", ")}]`,
+        type: "success",
+      });
+    }
+    const digitsAfterRoot = positionsToDigits(positions);
+    if (showSteps) {
+      const digSample = digitsAfterRoot.slice(0, 15).join(", ");
+      steps.push({
+        step: "Stage 2b: Digital Root Reduction",
+        detail: `Convert each position to single digit (1-9).\nPositions: [${posSample}]\nDigits:     [${digSample}]`,
+        type: "success",
+      });
+    }
+    const digitDedupResult = keepFirstOccurrenceOnly(digitsAfterRoot);
+    const {
+      unique: uniqueDigits,
+      uniqueCount: digUniqueCount,
+      duplicateCount: digDuplicateCount,
+    } = digitDedupResult;
+    if (showSteps) {
+      const digSample = digitsAfterRoot.slice(0, 20).join(", ");
+      const uniqueDigSample = uniqueDigits.slice(0, 20).join(", ");
+      steps.push({
+        step: "Stage 2c: Remove Duplicate Digits",
+        detail: `Keep only FIRST occurrence of each digit (1-9).\nAll subsequent duplicates eliminated.\nDigits: [${digSample}]\nAfter deduplication: [${uniqueDigSample}]\n${digUniqueCount} unique digits remain (${digDuplicateCount} removed)`,
+        type: "success",
+      });
+    }
+    const { sum, masterNumber } = calculateMasterSigil(uniqueDigits);
+    if (showSteps) {
+      const digitsStr = uniqueDigits.join(" + ");
+      steps.push({
+        step: "Stage 3a: Sum Final Unique Digits",
+        detail: `Add all remaining unique digits together:\n${digitsStr} = ${sum}`,
+        type: "success",
+      });
+      steps.push({
+        step: "Stage 3b: Master Sigil (Final Reduction)",
+        detail: `Reduce sum to single digit:\n${sum} → ${masterNumber}`,
+        type: "success",
+      });
+    }
+    return {
+      success: true,
+      masterSigil: masterNumber,
+      uniqueElements: uniqueConsonants,
+      uniqueDigits: uniqueDigits,
+      sum: sum,
+      steps: steps,
+      stats: {
+        inputLetters: text.replace(/[^a-zA-Z]/g, "").length,
+        processedCount: consonantsOnly.length,
+        uniqueCount: consUniqueCount,
+        finalDigits: digUniqueCount,
+      },
+    };
   } catch (error) {
     console.error("Sigil generation error:", error);
     steps.push({
       step: "Error",
-      detail: `Type: ${error.name}
-Message: ${error.message}
-Please check your input and try again.`,
+      detail: `Type: ${error.name}\nMessage: ${error.message}\nPlease check your input and try again.`,
       type: "error",
-      method: method,
     });
-    return {
-      success: false,
-      error: error,
-      steps: steps,
-      stats: { method: method },
-    };
+    return { success: false, error: error, steps: steps, stats: {} };
   }
 };
 
-const drawSigilStatic = (
-  digits,
-  canvasId,
-  showIntersections = true,
-  method = "all",
-) => {
+const drawSigilStatic = (digits, canvasId, showIntersections = true) => {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
   const ctx = canvas.getContext("2d");
@@ -1188,7 +845,7 @@ const drawSigilStatic = (
   const centerY = canvas.height / 2;
   const radius = Math.min(canvas.width, canvas.height) * 0.38;
   const numberPositions = calculateCirclePositions(centerX, centerY, radius);
-  drawStaticBackground(ctx, centerX, centerY, radius, numberPositions, method);
+  drawStaticBackground(ctx, centerX, centerY, radius, numberPositions);
   let pathPoints = [];
   let intersections = [];
   if (digits.length >= 2) {
@@ -1201,13 +858,13 @@ const drawSigilStatic = (
     ctx.strokeStyle = "#ffd166";
     ctx.lineWidth = Math.max(5.5, radius / 42);
     ctx.stroke();
-    ctx.fillStyle = method === "vowels" ? "#ff8c42" : "#6c5ce7";
+    ctx.fillStyle = "#6c5ce7";
     for (let i = 0; i < pathPoints.length; i++) {
       const point = pathPoints[i];
       ctx.beginPath();
       ctx.arc(point.x, point.y, Math.max(10, radius / 28), 0, 2 * Math.PI);
       ctx.fill();
-      ctx.strokeStyle = method === "vowels" ? "#e65c00" : "#5a4fcf";
+      ctx.strokeStyle = "#5a4fcf";
       ctx.lineWidth = 3;
       ctx.stroke();
     }
@@ -1220,9 +877,9 @@ const drawSigilStatic = (
       0,
       2 * Math.PI,
     );
-    ctx.fillStyle = method === "vowels" ? "#ff5252" : "#ff6b6b";
+    ctx.fillStyle = "#ff6b6b";
     ctx.fill();
-    ctx.strokeStyle = method === "vowels" ? "#cc0000" : "#ff5252";
+    ctx.strokeStyle = "#ff5252";
     ctx.lineWidth = 4;
     ctx.stroke();
     ctx.font = `bold ${Math.max(16, radius / 14)}px Arial`;
@@ -1306,76 +963,76 @@ const drawSigilStatic = (
   };
 };
 
+// ========== FIXED: displayResults with safe DOM access and corrected regex ==========
 const displayResults = (result) => {
   if (currentAnimation) {
     currentAnimation.stop();
     currentAnimation = null;
   }
-  document.getElementById("positionsSequence").textContent = "-";
-  document.getElementById("positionsSequence").classList.remove("error");
-  document.getElementById("digitsSequence").textContent = "-";
-  document.getElementById("digitsSequence").classList.remove("error");
-  document.getElementById("result").textContent = "-";
-  document.getElementById("result").classList.remove("error");
-  document.getElementById("sumDisplay").textContent = "-";
-  document.getElementById("stepsContainer").innerHTML = "";
-  document.getElementById("sequenceContainer").innerHTML = "";
-  document.getElementById("intersectionList").innerHTML =
-    "<li>Generate sigil to see sacred intersections</li>";
+  safeSetText("positionsSequence", "-");
+  document.getElementById("positionsSequence")?.classList.remove("error");
+  safeSetText("digitsSequence", "-");
+  document.getElementById("digitsSequence")?.classList.remove("error");
+  safeSetText("result", "-");
+  document.getElementById("result")?.classList.remove("error");
+  safeSetText("sumDisplay", "-");
+  const stepsContainer = document.getElementById("stepsContainer");
+  const sequenceContainer = document.getElementById("sequenceContainer");
+  const intersectionList = document.getElementById("intersectionList");
+  if (stepsContainer) stepsContainer.innerHTML = "";
+  if (sequenceContainer) sequenceContainer.innerHTML = "";
+  if (intersectionList)
+    intersectionList.innerHTML =
+      "<li>Generate sigil to see sacred intersections</li>";
+
   if (!result.success) {
-    document.getElementById("result").textContent = "ERROR";
-    document.getElementById("result").classList.add("error");
-    showNotification(result.error.message || "An error occurred", "error");
-    const stepElement = document.createElement("div");
-    stepElement.className = `step error${result.stats.method === "vowels" ? " vowel-mode" : ""}`;
-    stepElement.innerHTML = `
-      <span class="step-number">Error:</span>
-      <div class="step-detail">${result.steps[0].detail.replace(/\n/g, "<br>")}</div>
-    `;
-    document.getElementById("stepsContainer").appendChild(stepElement);
+    safeSetText("result", "ERROR");
+    document.getElementById("result")?.classList.add("error");
+    showNotification(result.error?.message || "An error occurred", "error");
+    if (stepsContainer) {
+      const stepElement = document.createElement("div");
+      stepElement.className = `step error`;
+      stepElement.innerHTML = `<span class="step-number">Error:</span><div class="step-detail">${result.steps?.[0]?.detail.replace(/\n/g, "<br>")}</div>`;
+      stepsContainer.appendChild(stepElement);
+    }
     const canvas = document.getElementById("sigilCanvas");
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    document.getElementById("circleRadius").textContent = "-";
-    document.getElementById("circleCircumference").textContent = "-";
-    document.getElementById("circleArea").textContent = "-";
-    document.getElementById("pathLength").textContent = "-";
-    document.getElementById("segmentCount").textContent = "-";
-    document.getElementById("goldenRatio").textContent = "None";
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    ["pathLength", "segmentCount", "goldenRatio"].forEach((id) =>
+      safeSetText(id, "-"),
+    );
     return;
   }
+
   const { masterSigil, uniqueElements, uniqueDigits, sum, steps, stats } =
     result;
-  document.getElementById("positionsSequence").textContent =
-    stats.method === "vowels"
-      ? uniqueElements.join("")
-      : formatArray(uniqueElements, 20);
-  document.getElementById("digitsSequence").textContent =
-    uniqueDigits.join(" → ");
-  document.getElementById("result").textContent = masterSigil;
-  document.getElementById("sumDisplay").textContent = `${sum} → ${masterSigil}`;
-  document.getElementById("letterCount").textContent = stats.inputLetters;
-  document.getElementById("processedCount").textContent = stats.processedCount;
-  document.getElementById("uniqueCount").textContent = stats.uniqueCount;
-  document.getElementById("finalDigits").textContent = stats.finalDigits;
+  safeSetText("positionsSequence", formatArray(uniqueElements, 20));
+  safeSetText("digitsSequence", uniqueDigits.join(" → "));
+  safeSetText("result", masterSigil);
+  safeSetText("sumDisplay", `${sum} → ${masterSigil}`);
+  safeSetText("letterCount", stats.inputLetters);
+  safeSetText("processedCount", stats.processedCount);
+  safeSetText("uniqueCount", stats.uniqueCount);
+  safeSetText("finalDigits", stats.finalDigits);
   createSequenceLabels(uniqueDigits);
-  const stepsContainer = document.getElementById("stepsContainer");
-  steps.forEach((step) => {
-    const stepElement = document.createElement("div");
-    stepElement.className = `step${step.type === "error" ? " error" : step.type === "success" ? " success" : ""}${step.method === "vowels" ? " vowel-mode" : ""}`;
-    stepElement.innerHTML = `
-      <span class="step-number">${step.step}:</span>
-      <div class="step-detail">${step.detail.replace(/\n/g, "<br>")}</div>
-    `;
-    stepsContainer.appendChild(stepElement);
-  });
+
+  if (stepsContainer && steps) {
+    steps.forEach((step) => {
+      const stepElement = document.createElement("div");
+      stepElement.className = `step${step.type === "error" ? " error" : step.type === "success" ? " success" : ""}`;
+      stepElement.innerHTML = `<span class="step-number">${step.step}:</span><div class="step-detail">${step.detail.replace(/\n/g, "<br>")}</div>`;
+      stepsContainer.appendChild(stepElement);
+    });
+  }
+
   const showIntersections =
-    document.getElementById("showIntersections").checked;
+    document.getElementById("showIntersections")?.checked;
   const canvasResult = drawSigilStatic(
     uniqueDigits,
     "sigilCanvas",
     showIntersections,
-    stats.method,
   );
   if (canvasResult && showIntersections) {
     updateIntersectionDisplay(
@@ -1383,57 +1040,29 @@ const displayResults = (result) => {
       canvasResult.pathPoints,
       uniqueDigits,
     );
-  } else {
-    document.getElementById("intersectionList").innerHTML =
-      "<li>Intersection display disabled</li>";
+  } else if (intersectionList) {
+    intersectionList.innerHTML = "<li>Intersection display disabled</li>";
   }
-  const methodLabel =
-    stats.method === "vowels" ? "Vowel-Only Sigil" : "All-Letters Sigil";
   showNotification(
-    `Sacred ${methodLabel} ${masterSigil} generated with geometric precision!`,
+    `Sacred Sigil ${masterSigil} generated with geometric precision!`,
     "success",
   );
 };
 
 // ========== EVENT HANDLERS ==========
 document.addEventListener("DOMContentLoaded", () => {
-  // Declare variables at TOP of scope to avoid temporal dead zone
   let isProcessing = false;
   let lastProcessedText = "";
 
-  // Method switching
-  document.getElementById("allLettersOption").addEventListener("click", () => {
-    updateMethodDisplay("all");
-    currentMethod = "all";
-    lastProcessedText = "";
-    if (
-      document.getElementById("autoProcess").checked &&
-      document.getElementById("affirmation").value.trim()
-    ) {
-      processSigil();
-    }
-  });
-
-  document.getElementById("vowelOnlyOption").addEventListener("click", () => {
-    updateMethodDisplay("vowels");
-    currentMethod = "vowels";
-    lastProcessedText = "";
-    if (
-      document.getElementById("autoProcess").checked &&
-      document.getElementById("affirmation").value.trim()
-    ) {
-      processSigil();
-    }
-  });
-
   setupDownloadButton();
-  updateMethodDisplay("all");
 
   const canvas = document.getElementById("sigilCanvas");
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
   const resizeCanvas = () => {
     const container = canvas.parentElement;
+    if (!container) return;
     const size = Math.min(container.clientWidth - 70, 600);
     canvas.width = size;
     canvas.height = size;
@@ -1452,11 +1081,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   };
-
   window.addEventListener("resize", resizeCanvas);
   resizeCanvas();
 
-  document.getElementById("animateBtn").addEventListener("click", () => {
+  document.getElementById("animateBtn")?.addEventListener("click", () => {
     if (currentPathPoints.length < 2) {
       showNotification(
         "Need at least 2 digits for sacred animation",
@@ -1478,9 +1106,10 @@ document.addEventListener("DOMContentLoaded", () => {
       currentPathPoints,
       currentNumberPositions,
       {
-        showIntersections: document.getElementById("showIntersections").checked,
+        showIntersections:
+          document.getElementById("showIntersections")?.checked,
         onAnimationComplete: (intersections) => {
-          if (document.getElementById("showIntersections").checked) {
+          if (document.getElementById("showIntersections")?.checked) {
             updateIntersectionDisplay(
               intersections,
               currentPathPoints,
@@ -1493,12 +1122,11 @@ document.addEventListener("DOMContentLoaded", () => {
         radius,
         canvasWidth: canvas.width,
         canvasHeight: canvas.height,
-        method: currentMethod,
       },
     );
   });
 
-  document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("resetBtn")?.addEventListener("click", () => {
     if (currentAnimation) {
       currentAnimation.stop();
       currentAnimation = null;
@@ -1508,13 +1136,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .forEach((label, index) => {
         label.classList.toggle("active", index === 0);
       });
-    if (currentCanvasData) {
-      ctx.putImageData(currentCanvasData, 0, 0);
-    }
-    document.getElementById("canvasOverlay").classList.remove("active");
-    document.getElementById("animationStatus").classList.remove("active");
-    document.getElementById("animateBtn").disabled = false;
-    document.getElementById("resetBtn").disabled = false;
+    if (currentCanvasData) ctx.putImageData(currentCanvasData, 0, 0);
+    document.getElementById("canvasOverlay")?.classList.remove("active");
+    document.getElementById("animationStatus")?.classList.remove("active");
+    const animateBtn = document.getElementById("animateBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    if (animateBtn) animateBtn.disabled = false;
+    if (resetBtn) resetBtn.disabled = false;
     showNotification("Sacred animation reset", "success");
   });
 
@@ -1526,8 +1154,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const validateAndProcess = () => {
     hideError();
-    const text = affirmationInput.value.trim();
-    updateCharCount(text, currentMethod);
+    const text = affirmationInput?.value.trim() || "";
+    updateCharCount(text);
     if (!text) {
       showError("Please enter some text to process.");
       return false;
@@ -1545,14 +1173,15 @@ document.addEventListener("DOMContentLoaded", () => {
       showError("Too many letters (maximum 5,000 alphabetic characters).");
       return false;
     }
-    if (currentMethod === "vowels") {
-      const vowels = text.toUpperCase().replace(/[^AEIOUY]/g, "");
-      if (vowels.length === 0) {
-        showError(
-          "No vowels found (vowels are A, E, I, O, U, Y). Add vowels to your text.",
-        );
-        return false;
-      }
+    const consonants = text
+      .toUpperCase()
+      .replace(/[^A-Z]/g, "")
+      .replace(/[AEIOUY]/g, "");
+    if (consonants.length === 0) {
+      showError(
+        "No consonants found (vowels A, E, I, O, U, Y removed). Add consonants to your text.",
+      );
+      return false;
     }
     if (text === lastProcessedText) return false;
     return true;
@@ -1562,12 +1191,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isProcessing) return;
     if (!validateAndProcess()) return;
     isProcessing = true;
-    setLoading(true, currentMethod);
+    setLoading(true);
     const text = affirmationInput.value.trim();
-    const options = {
-      showSteps: showStepsCheckbox.checked,
-      method: currentMethod,
-    };
+    const options = { showSteps: showStepsCheckbox?.checked };
     try {
       const result = generateSigilSequence(text, options);
       displayResults(result);
@@ -1577,21 +1203,20 @@ document.addEventListener("DOMContentLoaded", () => {
       showError("An unexpected error occurred. Please try again.");
       showNotification("Sacred calculation failed", "error");
     } finally {
-      setLoading(false, currentMethod);
+      setLoading(false);
       isProcessing = false;
     }
   };
 
-  document.getElementById("generate").addEventListener("click", processSigil);
-
-  affirmationInput.addEventListener("keydown", (e) => {
+  document.getElementById("generate")?.addEventListener("click", processSigil);
+  affirmationInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) processSigil();
   });
 
   let inputTimeout;
-  affirmationInput.addEventListener("input", () => {
-    updateCharCount(affirmationInput.value, currentMethod);
-    if (autoProcessCheckbox.checked && !isProcessing) {
+  affirmationInput?.addEventListener("input", () => {
+    updateCharCount(affirmationInput.value);
+    if (autoProcessCheckbox?.checked && !isProcessing) {
       clearTimeout(inputTimeout);
       inputTimeout = setTimeout(() => {
         if (validateAndProcess()) processSigil();
@@ -1599,15 +1224,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  autoProcessCheckbox.addEventListener("change", () => {
-    if (autoProcessCheckbox.checked && affirmationInput.value.trim())
+  autoProcessCheckbox?.addEventListener("change", () => {
+    if (autoProcessCheckbox.checked && affirmationInput?.value.trim())
       processSigil();
   });
 
-  showIntersectionsCheckbox.addEventListener("change", () => {
+  showIntersectionsCheckbox?.addEventListener("change", () => {
     if (lastProcessedText && !isProcessing) processSigil();
   });
 
-  updateCharCount(affirmationInput.value, currentMethod);
+  updateCharCount(affirmationInput?.value || "");
   setTimeout(processSigil, 500);
 });

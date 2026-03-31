@@ -1,8 +1,6 @@
 :root {
   --all-letters-primary: #6c5ce7;
   --all-letters-secondary: #8e7dff;
-  --vowel-only-primary: #ff6b6b;
-  --vowel-only-secondary: #ff8c42;
   --sacred-gold: #ffd166;
   --spiritual-green: #06d6a0;
   --cosmic-purple: #4a4163;
@@ -33,8 +31,6 @@ body {
   align-items: center;
 }
 
-/* Add these new classes to the existing CSS file */
-
 .visualization-description {
   color: #c5b9e0;
   margin-bottom: 30px;
@@ -49,7 +45,7 @@ body {
 }
 
 .legend-start-inline {
-  color: var(--vowel-only-primary);
+  color: #ff6b6b;
   font-weight: 600;
 }
 
@@ -82,17 +78,6 @@ body {
 
 .download-icon {
   font-size: 1.9rem;
-}
-
-/* Also fix the CSS selector for switch-slider */
-.method-option:nth-child(2).active ~ .switch-slider {
-  left: calc(50% + 5px);
-  background: linear-gradient(
-    135deg,
-    var(--vowel-only-primary),
-    var(--vowel-only-secondary)
-  );
-  box-shadow: 0 3px 15px rgba(255, 107, 107, 0.6);
 }
 
 .container {
@@ -149,7 +134,6 @@ h1 {
     90deg,
     var(--all-letters-primary),
     var(--sacred-gold),
-    var(--vowel-only-primary),
     var(--all-letters-primary)
   );
   -webkit-background-clip: text;
@@ -184,222 +168,6 @@ h1 {
   font-style: italic;
   position: relative;
   z-index: 1;
-}
-
-.method-selector-container {
-  background: rgba(25, 22, 45, 0.9);
-  border-radius: 28px;
-  padding: 25px;
-  margin: 30px 0 35px;
-  border: 2px solid rgba(108, 92, 231, 0.4);
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.method-selector-container::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--all-letters-primary),
-    var(--sacred-gold),
-    var(--vowel-only-primary)
-  );
-  z-index: 1;
-}
-
-.method-title {
-  text-align: center;
-  color: var(--sacred-gold);
-  font-size: 1.8rem;
-  margin-bottom: 20px;
-  font-weight: 700;
-  position: relative;
-  z-index: 1;
-}
-
-.method-switch {
-  display: flex;
-  background: rgba(15, 12, 30, 0.95);
-  border-radius: 20px;
-  padding: 5px;
-  max-width: 600px;
-  margin: 0 auto 25px;
-  border: 2px solid rgba(108, 92, 231, 0.5);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
-}
-
-.method-option {
-  flex: 1;
-  text-align: center;
-  padding: 18px 10px;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  font-weight: 600;
-  font-size: 1.15rem;
-  transition: all 0.4s ease;
-  color: #a291e6;
-}
-
-.method-option.active {
-  color: white;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-}
-
-.method-option:first-child {
-  border-radius: 18px 0 0 18px;
-}
-
-.method-option:last-child {
-  border-radius: 0 18px 18px 0;
-}
-
-.switch-slider {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: calc(50% - 5px);
-  height: calc(100% - 10px);
-  background: linear-gradient(
-    135deg,
-    var(--all-letters-primary),
-    var(--all-letters-secondary)
-  );
-  border-radius: 16px;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 3px 15px rgba(108, 92, 231, 0.6);
-  z-index: 1;
-}
-
-.method-option:nth-child(2).active ~ .switch-slider {
-  left: calc(50% + 5px);
-  background: linear-gradient(
-    135deg,
-    var(--vowel-only-primary),
-    var(--vowel-only-secondary)
-  );
-  box-shadow: 0 3px 15px rgba(255, 107, 107, 0.6);
-}
-
-.method-description {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding: 20px;
-  border-radius: 20px;
-  background: rgba(30, 27, 55, 0.8);
-  border: 1.5px solid rgba(108, 92, 231, 0.3);
-  position: relative;
-  z-index: 1;
-}
-
-.method-desc-item {
-  flex: 1;
-  padding: 15px;
-  text-align: center;
-  transition: all 0.4s ease;
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.method-desc-item::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(108, 92, 231, 0.15),
-    transparent 70%
-  );
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.method-desc-item.active::before {
-  opacity: 1;
-}
-
-.method-desc-item:first-child {
-  margin-right: 15px;
-}
-
-.method-icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-  display: block;
-}
-
-.all-letters .method-icon {
-  color: var(--all-letters-primary);
-}
-.vowel-only .method-icon {
-  color: var(--vowel-only-primary);
-}
-
-.method-name {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  display: block;
-}
-
-.all-letters .method-name {
-  color: var(--all-letters-secondary);
-}
-.vowel-only .method-name {
-  color: var(--vowel-only-secondary);
-}
-
-.method-desc {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #c5b9e0;
-}
-
-.all-letters .method-desc {
-  color: #b8a9d4;
-}
-.vowel-only .method-desc {
-  color: #ffb3ba;
-}
-
-.method-highlight {
-  display: block;
-  margin-top: 8px;
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.all-letters .method-highlight {
-  color: var(--sacred-gold);
-}
-.vowel-only .method-highlight {
-  color: var(--spiritual-green);
-}
-
-.spiritual-note {
-  background: rgba(30, 25, 50, 0.85);
-  border-left: 4px solid var(--vowel-only-primary);
-  padding: 15px;
-  border-radius: 0 12px 12px 0;
-  margin-top: 15px;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #ffb3ba;
-  font-style: italic;
 }
 
 .input-section {
@@ -482,7 +250,7 @@ textarea::placeholder {
 }
 
 .char-count.warning {
-  color: var(--vowel-only-primary);
+  color: #ff6b6b;
   animation: pulse 2s infinite;
 }
 
@@ -585,17 +353,6 @@ button {
   letter-spacing: 2.2px;
 }
 
-.vowel-mode button {
-  background: linear-gradient(
-    135deg,
-    var(--vowel-only-primary) 0%,
-    var(--vowel-only-secondary) 100%
-  );
-  box-shadow:
-    0 14px 40px rgba(255, 107, 107, 0.7),
-    0 0 30px rgba(255, 209, 102, 0.5);
-}
-
 button::before {
   content: "";
   position: absolute;
@@ -620,19 +377,9 @@ button:hover:not(:disabled) {
     0 0 35px rgba(255, 209, 102, 0.65);
 }
 
-.vowel-mode button:hover:not(:disabled) {
-  box-shadow:
-    0 16px 45px rgba(255, 107, 107, 0.8),
-    0 0 35px rgba(255, 209, 102, 0.65);
-}
-
 button:active:not(:disabled) {
   transform: translateY(1px);
   box-shadow: 0 10px 30px rgba(108, 92, 231, 0.7);
-}
-
-.vowel-mode button:active:not(:disabled) {
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.7);
 }
 
 button:hover::before {
@@ -709,10 +456,6 @@ button.loading {
   z-index: 1;
 }
 
-.result-title.vowel-mode {
-  color: var(--vowel-only-secondary);
-}
-
 .result-title::after {
   content: "";
   position: absolute;
@@ -729,15 +472,6 @@ button.loading {
   border-radius: 4px;
   background-size: 200% 100%;
   animation: gradientBG 6s ease infinite;
-}
-
-.result-title.vowel-mode::after {
-  background: linear-gradient(
-    90deg,
-    var(--vowel-only-primary),
-    var(--sacred-gold),
-    var(--vowel-only-primary)
-  );
 }
 
 .positions-sequence,
@@ -794,7 +528,7 @@ button.loading {
 .digits-sequence.error {
   background: rgba(255, 107, 107, 0.22);
   border-color: rgba(255, 107, 107, 0.65);
-  color: var(--vowel-only-primary);
+  color: #ff6b6b;
   box-shadow:
     inset 0 0 25px rgba(255, 107, 107, 0.35),
     0 7px 20px rgba(0, 0, 0, 0.4);
@@ -813,9 +547,7 @@ button.loading {
     var(--all-letters-primary),
     var(--all-letters-secondary),
     var(--sacred-gold),
-    var(--vowel-only-secondary),
-    var(--vowel-only-primary),
-    var(--sacred-gold)
+    var(--all-letters-primary)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -847,10 +579,10 @@ button.loading {
 #result.error {
   background: linear-gradient(
     90deg,
-    var(--vowel-only-primary),
-    var(--vowel-only-secondary),
+    #ff6b6b,
+    #ff8c42,
     var(--sacred-gold),
-    var(--vowel-only-primary)
+    #ff6b6b
   );
   animation: pulse-glow-error 3.2s infinite alternate;
 }
@@ -982,10 +714,6 @@ button.loading {
   z-index: 1;
 }
 
-.step.vowel-mode {
-  border-left-color: var(--vowel-only-primary);
-}
-
 .step:hover {
   background: rgba(30, 27, 52, 0.96);
   transform: translateX(6px);
@@ -994,7 +722,7 @@ button.loading {
 }
 
 .step.error {
-  border-left-color: var(--vowel-only-primary);
+  border-left-color: #ff6b6b;
   background: rgba(255, 107, 107, 0.2);
   border-color: rgba(255, 107, 107, 0.4);
 }
@@ -1220,21 +948,8 @@ canvas {
   box-shadow: 0 9px 30px rgba(108, 92, 231, 0.6);
 }
 
-.vowel-mode .animate-btn.reset {
-  background: linear-gradient(
-    135deg,
-    var(--vowel-only-primary) 0%,
-    var(--vowel-only-secondary) 100%
-  );
-  box-shadow: 0 9px 30px rgba(255, 107, 107, 0.6);
-}
-
 .animate-btn.reset:hover {
   box-shadow: 0 11px 35px rgba(108, 92, 231, 0.75);
-}
-
-.vowel-mode .animate-btn.reset:hover {
-  box-shadow: 0 11px 35px rgba(255, 107, 107, 0.75);
 }
 
 .download-section {
@@ -1331,11 +1046,7 @@ canvas {
 }
 
 .notification.error {
-  background: linear-gradient(
-    135deg,
-    var(--vowel-only-primary) 0%,
-    var(--vowel-only-secondary) 100%
-  );
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8c42 100%);
   box-shadow: 0 14px 40px rgba(255, 107, 107, 0.65);
   border-color: rgba(255, 255, 255, 0.25);
 }
@@ -1348,11 +1059,11 @@ canvas {
 
 .error-message {
   background: rgba(255, 107, 107, 0.28);
-  border-left: 8px solid var(--vowel-only-primary);
+  border-left: 8px solid #ff6b6b;
   padding: 24px;
   border-radius: 0 18px 18px 0;
   margin: 28px 0;
-  color: var(--vowel-only-primary);
+  color: #ff6b6b;
   font-size: 1.2rem;
   display: none;
   animation: fadeIn 0.55s ease;
@@ -1507,7 +1218,7 @@ canvas {
 }
 
 .legend-start {
-  background: var(--vowel-only-primary);
+  background: #ff6b6b;
   border-color: #ff5252;
   box-shadow: 0 0 14px rgba(255, 107, 107, 0.85);
   position: relative;
@@ -1609,21 +1320,9 @@ canvas {
     transparent,
     var(--all-letters-primary),
     var(--sacred-gold),
-    var(--vowel-only-primary),
     transparent
   );
   z-index: 1;
-}
-
-.vowel-mode .measurements-container::before {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--vowel-only-primary),
-    var(--sacred-gold),
-    var(--spiritual-green),
-    transparent
-  );
 }
 
 .measurements-title {
@@ -1671,10 +1370,6 @@ canvas {
   gap: 12px;
   position: relative;
   z-index: 1;
-}
-
-.vowel-mode .category-title {
-  color: var(--vowel-only-secondary);
 }
 
 .category-title::before {
@@ -1745,10 +1440,6 @@ canvas {
   border-bottom: 1.5px solid rgba(108, 92, 231, 0.4);
   position: relative;
   z-index: 1;
-}
-
-.vowel-mode .intersection-title {
-  color: var(--vowel-only-secondary);
 }
 
 .intersection-title::before {
@@ -1958,31 +1649,5 @@ canvas {
   .measurement-value {
     text-align: left;
     width: 100%;
-  }
-  .method-switch {
-    flex-direction: column;
-    height: auto;
-  }
-  .method-option {
-    width: 100%;
-    padding: 14px;
-  }
-  .switch-slider {
-    width: calc(100% - 10px);
-    height: 50%;
-    left: 5px;
-    top: 5px;
-  }
-  .method-option:nth-child(2).active ~ .switch-slider {
-    top: calc(50% + 5px);
-    left: 5px;
-  }
-}
-
-/* Mobile fix for switch slider */
-@media (max-width: 480px) {
-  .method-option:nth-child(2).active ~ .switch-slider {
-    top: calc(50% + 5px);
-    left: 5px;
   }
 }
